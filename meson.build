@@ -21,17 +21,7 @@ if not libobs_dep.found()
   libobs_dep = declare_dependency()
 endif
 
-libopentracecapture_dep = dependency('libopentracecapture', 
-  fallback : ['libopentracecapture', 'libopentracecapture_dep'],
-  required : false)
-
-if not libopentracecapture_dep.found()
-  # Use local OpenTraceCapture build
-  opentracecapture_inc = include_directories('../OpenTraceCapture/include')
-  libopentracecapture_dep = declare_dependency(
-    include_directories : opentracecapture_inc
-  )
-endif
+libopentracecapture_dep = dependency('libopentracecapture')
 
 # Plugin sources
 plugin_sources = [
