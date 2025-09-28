@@ -2,6 +2,16 @@
 
 A native OBS Studio plugin that displays real-time measurement values from DMM (Digital Multimeter) and LCR (Inductance, Capacitance, Resistance) meters using the OpenTraceCapture library.
 
+## Versioning
+
+This project follows semantic versioning starting from version 0.1.0. The ABI (Application Binary Interface) is tied to the minor version number, meaning:
+
+- **Major version** (0.x.x): Breaking API/ABI changes
+- **Minor version** (x.1.x): ABI changes, new features  
+- **Patch version** (x.x.1): Bug fixes, no ABI changes
+
+Current version: **0.1.0**
+
 ## Features
 
 - Real-time display of measurement values in OBS overlays
