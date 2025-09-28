@@ -13,7 +13,7 @@ A native OBS Studio plugin that displays real-time measurement values from DMM (
 ## Requirements
 
 - OBS Studio (with development headers)
-- OpenTraceCapture library (from ../OpenTraceCapture)
+- OpenTraceCapture library
 - Meson >= 0.60.0
 - Ninja build system
 - GCC/Clang with C++17 support
@@ -21,22 +21,41 @@ A native OBS Studio plugin that displays real-time measurement values from DMM (
 
 ## Building
 
-1. Ensure OpenTraceCapture is built and installed:
+1. **Set up OBS development headers:**
+   
+   On most systems, you'll need to clone the OBS Studio source for headers:
    ```bash
-   cd ../OpenTraceCapture
-   meson setup builddir
-   meson compile -C builddir
-   meson install -C builddir
+   git clone https://github.com/obsproject/obs-studio.git
+   export OBS_INCLUDE_DIR=$(pwd)/obs-studio/libobs
+   ```
+   
+   Alternatively, if your system has OBS development packages:
+   ```bash
+   # Ubuntu/Debian
+   sudo apt install libobs-dev
+   
+   # In this case, no OBS_INCLUDE_DIR needed
    ```
 
-2. Build the plugin:
+2. **Build and install OpenTraceCapture dependency:**
    ```bash
-   ./build.sh
+   git clone https://github.com/opentracelab/OpenTraceCapture.git
+   cd OpenTraceCapture
+   meson setup build --buildtype=release
+   meson compile -C build
+   meson install -C build  # or sudo meson install -C build
+   cd ..
    ```
 
-3. Install the plugin:
+3. **Build the plugin:**
    ```bash
-   meson install -C builddir
+   meson setup build --buildtype=release
+   meson compile -C build
+   ```
+
+4. **Install the plugin:**
+   ```bash
+   meson install -C build  # or sudo meson install -C build
    ```
 
 ## Usage

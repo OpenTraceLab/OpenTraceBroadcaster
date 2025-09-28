@@ -31,7 +31,7 @@ if not libobs_dep.found()
   endif
 endif
 
-libopentracecapture_dep = dependency('libopentracecapture')
+libopentracecapture_dep = dependency('opentracecapture')
 
 # Plugin sources
 plugin_sources = [
