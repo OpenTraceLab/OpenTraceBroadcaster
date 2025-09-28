@@ -21,14 +21,14 @@ if not libobs_dep.found()
   libobs_dep = declare_dependency()
 endif
 
-opentracecapture_dep = dependency('opentracecapture', 
-  fallback : ['opentracecapture', 'opentracecapture_dep'],
+libopentracecapture_dep = dependency('libopentracecapture', 
+  fallback : ['libopentracecapture', 'libopentracecapture_dep'],
   required : false)
 
-if not opentracecapture_dep.found()
+if not libopentracecapture_dep.found()
   # Use local OpenTraceCapture build
   opentracecapture_inc = include_directories('../OpenTraceCapture/include')
-  opentracecapture_dep = declare_dependency(
+  libopentracecapture_dep = declare_dependency(
     include_directories : opentracecapture_inc
   )
 endif
@@ -42,7 +42,7 @@ plugin_sources = [
 # Build plugin
 obs_measurement_overlay = shared_module('obs-measurement-overlay',
   plugin_sources,
-  dependencies : [libobs_dep, opentracecapture_dep],
+  dependencies : [libobs_dep, libopentracecapture_dep],
   include_directories : include_directories('../OpenTraceCapture/include'),
   name_suffix : plugin_suffix.substring(1),
   install : true,
