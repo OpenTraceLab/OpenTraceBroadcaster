@@ -17,8 +17,18 @@ endif
 # Dependencies
 libobs_dep = dependency('libobs', required : false)
 if not libobs_dep.found()
-  # Fallback for systems without pkg-config for OBS
-  libobs_dep = declare_dependency()
+  # Fallback for systems without pkg-config for OBS (like macOS)
+  obs_include_dir = get_option('obs_include_dir')
+  if obs_include_dir == ''
+    obs_include_dir = run_command('printenv', 'OBS_INCLUDE_DIR', check: false).stdout().strip()
+  endif
+  if obs_include_dir != ''
+    libobs_dep = declare_dependency(
+      include_directories: include_directories(obs_include_dir)
+    )
+  else
+    libobs_dep = declare_dependency()
+  endif
 endif
 
 libopentracecapture_dep = dependency('libopentracecapture')

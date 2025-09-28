@@ -86,7 +86,12 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew update
-          brew install meson ninja pkg-config ccache glib libusb libzip libftdi hidapi libserialport obs
+          brew install meson ninja pkg-config ccache glib libusb libzip libftdi hidapi libserialport
+          # Install OBS Studio with development headers
+          brew install --cask obs
+          # Clone OBS source for headers since Homebrew doesn't provide dev package
+          git clone --depth 1 --branch 30.2.3 https://github.com/obsproject/obs-studio.git /tmp/obs-studio
+          echo "OBS_INCLUDE_DIR=/tmp/obs-studio/libobs" >> "$GITHUB_ENV"
           echo "$(brew --prefix ccache)/libexec" >> "$GITHUB_PATH"
           echo "XDG_CACHE_HOME=$HOME/.cache"   >> "$GITHUB_ENV"
           echo "CCACHE_DIR=$HOME/.cache/ccache" >> "$GITHUB_ENV"
