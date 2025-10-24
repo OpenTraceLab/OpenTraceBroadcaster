@@ -77,7 +77,7 @@ Current version: **0.1.0**
 
 ## Supported Devices
 
-Any device supported by OpenTraceCapture/libsigrok, including:
+Any device supported by OpenTraceCapture, including:
 - Keysight/Agilent multimeters
 - Fluke multimeters
 - Rigol multimeters
@@ -90,5 +90,5 @@ The plugin automatically scans for available devices. Measurements are updated a
 ## Troubleshooting
 
 - Ensure your measurement device is connected and recognized by the system
-- Check that OpenTraceCapture can detect your device using `sigrok-cli --scan`
+- Check that OpenTraceCapture can detect your device using `opentrace-cli --scan`
 - Verify OBS Studio can load the plugin by checking the log files
