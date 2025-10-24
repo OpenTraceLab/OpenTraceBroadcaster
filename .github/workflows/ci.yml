@@ -9,6 +9,7 @@ on:
       - ".github/workflows/**"
   push:
     branches: [main]
+    tags: ['v*']
     paths:
       - "src/**"
       - "meson.build"
@@ -30,6 +31,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Get latest OpenTraceCapture release
+        id: otc-release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const releases = await github.rest.repos.listReleases({
+              owner: 'OpenTraceLab',
+              repo: 'OpenTraceCapture'
+            });
+            const sortedReleases = releases.data.sort((a, b) => 
+              new Date(b.created_at) - new Date(a.created_at)
+            );
+            const latestTag = sortedReleases[0].tag_name;
+            core.setOutput('tag', latestTag);
+            core.info(`Using OpenTraceCapture ${latestTag}`);
 
       # Linux cache
       - name: Cache (Linux)
@@ -68,41 +85,24 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y meson ninja-build pkg-config gcc g++ ccache \
-            libglib2.0-dev libusb-1.0-0-dev libzip-dev libftdi1-dev libserialport-dev libhidapi-dev libieee1284-3-dev \
-            libobs-dev
+          sudo apt-get install -y ninja-build pkg-config gcc g++ ccache python3-pip \
+            libglib2.0-dev libusb-1.0-0-dev libzip-dev libftdi1-dev \
+            libserialport-dev libhidapi-dev libobs-dev
+          pip3 install --user meson
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           echo "/usr/lib/ccache" >> "$GITHUB_PATH"
           mkdir -p "$HOME/.cache/ccache" "$HOME/.cache/meson"
-          # Build and install OpenTraceCapture dependency
-          git clone https://github.com/opentracelab/OpenTraceCapture.git /tmp/opentracecapture
-          cd /tmp/opentracecapture
-          meson setup build --buildtype=release -Dbindings_cxx=false
-          meson compile -C build
-          sudo meson install -C build
-          sudo ldconfig
-          echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" >> "$GITHUB_ENV"
 
       - name: macOS deps
         if: runner.os == 'macOS'
         run: |
           brew update
-          brew install meson ninja pkg-config ccache glib libusb libzip libftdi hidapi libserialport
-          # Install OBS Studio with development headers
-          brew install --cask obs
-          # Clone OBS source for headers since Homebrew doesn't provide dev package
-          git clone --depth 1 --branch 30.2.3 https://github.com/obsproject/obs-studio.git /tmp/obs-studio
-          echo "OBS_INCLUDE_DIR=/tmp/obs-studio/libobs" >> "$GITHUB_ENV"
+          brew install meson ninja pkg-config ccache glib libusb libzip libftdi \
+            hidapi libserialport obs
           echo "$(brew --prefix ccache)/libexec" >> "$GITHUB_PATH"
           echo "XDG_CACHE_HOME=$HOME/.cache"   >> "$GITHUB_ENV"
           echo "CCACHE_DIR=$HOME/.cache/ccache" >> "$GITHUB_ENV"
-          echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig:$PKG_CONFIG_PATH" >> "$GITHUB_ENV"
           mkdir -p "$HOME/.cache/ccache" "$HOME/.cache/meson"
-          # Build and install OpenTraceCapture dependency
-          git clone https://github.com/opentracelab/OpenTraceCapture.git /tmp/opentracecapture
-          cd /tmp/opentracecapture
-          meson setup build --buildtype=release -Dbindings_cxx=false
-          meson compile -C build
-          meson install -C build
 
       - name: MSYS2 setup
         if: runner.os == 'Windows'
@@ -111,7 +111,6 @@ jobs:
           msystem: MINGW64
           update: true
           install: >-
-            git
             mingw-w64-x86_64-toolchain
             mingw-w64-x86_64-meson
             mingw-w64-x86_64-ninja
@@ -124,22 +123,47 @@ jobs:
             mingw-w64-x86_64-libserialport
             mingw-w64-x86_64-hidapi
 
-      - name: Build OpenTraceCapture (Windows)
+      - name: Install OBS Studio (Windows)
         if: runner.os == 'Windows'
         shell: msys2 {0}
         run: |
-          git clone https://github.com/opentracelab/OpenTraceCapture.git /tmp/opentracecapture
-          cd /tmp/opentracecapture
-          meson setup build --buildtype=release -Dbindings_cxx=false
-          meson compile -C build
-          meson install -C build
+          wget -q https://github.com/obsproject/obs-studio/releases/download/30.2.2/OBS-Studio-30.2.2-Windows.zip
+          unzip -q OBS-Studio-30.2.2-Windows.zip -d /mingw64
+          echo "OBS_INCLUDE_DIR=/mingw64/include/obs" >> "$GITHUB_ENV"
+
+      - name: Install OpenTraceCapture (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          wget -q https://github.com/OpenTraceLab/OpenTraceCapture/releases/download/${{ steps.otc-release.outputs.tag }}/opentracecapture-linux.tar.gz
+          sudo tar xzf opentracecapture-linux.tar.gz -C /usr
+          sudo ldconfig
+
+      - name: Install OpenTraceCapture (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          wget -q https://github.com/OpenTraceLab/OpenTraceCapture/releases/download/${{ steps.otc-release.outputs.tag }}/opentracecapture-macos.tar.gz
+          sudo tar xzf opentracecapture-macos.tar.gz -C /usr/local
+
+      - name: Install OpenTraceCapture (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: |
+          wget -q https://github.com/OpenTraceLab/OpenTraceCapture/releases/download/${{ steps.otc-release.outputs.tag }}/opentracecapture-windows.tar.gz
+          tar xzf opentracecapture-windows.tar.gz -C /mingw64
 
       - name: Build & test (Linux/macOS)
         if: runner.os != 'Windows'
         run: |
-          meson setup build --buildtype=release
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            PREFIX=/usr/local
+          else
+            PREFIX=/usr
+          fi
+          meson setup build --buildtype=release --prefix=$PREFIX
           meson configure build
           meson compile -C build
+          DESTDIR="${PWD}/install" meson install -C build
+          tar czf obs-measurement-overlay-${{ runner.os == 'macOS' && 'macos' || 'linux' }}.tar.gz -C install$PREFIX .
 
       - name: Build & test (Windows)
         if: runner.os == 'Windows'
@@ -148,6 +172,35 @@ jobs:
           export CCACHE_DIR=/c/Users/runneradmin/.ccache
           export XDG_CACHE_HOME=/c/Users/runneradmin/AppData/Local
           mkdir -p "$CCACHE_DIR"
-          meson setup build --buildtype=release
+          meson setup build --buildtype=release --prefix=/mingw64
           meson configure build
           meson compile -C build
+          DESTDIR="${PWD}/install" meson install -C build
+          MINGW_PATH=$(find install -type d -name mingw64 | head -1)
+          tar czf obs-measurement-overlay-windows.tar.gz -C $MINGW_PATH .
+
+      - name: Upload artifact
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: obs-measurement-overlay-${{ runner.os == 'macOS' && 'macos' || runner.os == 'Windows' && 'windows' || 'linux' }}
+          path: obs-measurement-overlay-*.tar.gz
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/*/obs-measurement-overlay-*.tar.gz
+          draft: false
+          prerelease: true
