@@ -203,4 +203,4 @@ jobs:
         with:
           files: artifacts/*/obs-measurement-overlay-*.tar.gz
           draft: false
-          prerelease: true
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
