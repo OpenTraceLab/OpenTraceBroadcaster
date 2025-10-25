@@ -92,3 +92,8 @@ The plugin automatically scans for available devices. Measurements are updated a
 - Ensure your measurement device is connected and recognized by the system
 - Check that OpenTraceCapture can detect your device using `opentrace-cli --scan`
 - Verify OBS Studio can load the plugin by checking the log files
+
+## Community
+
+Join our community discussions on Discord: https://discord.gg/DsYwx59MPh
+
