@@ -1,99 +1,68 @@
-# OBS Measurement Overlay Plugin
+# OBS Measurement Overlay
 
-A native OBS Studio plugin that displays real-time measurement values from DMM (Digital Multimeter) and LCR (Inductance, Capacitance, Resistance) meters using the OpenTraceCapture library.
-
-## Versioning
-
-This project follows semantic versioning starting from version 0.1.0. The ABI (Application Binary Interface) is tied to the minor version number, meaning:
-
-- **Major version** (0.x.x): Breaking API/ABI changes
-- **Minor version** (x.1.x): ABI changes, new features  
-- **Patch version** (x.x.1): Bug fixes, no ABI changes
-
-Current version: **0.1.0**
+An OBS Studio plugin that displays real-time measurements from DMM (Digital Multimeter) and LCR meter devices as an overlay in your stream or recording.
 
 ## Features
 
-- Real-time display of measurement values in OBS overlays
-- Support for DMM and LCR devices via OpenTraceCapture
-- Automatic unit detection (V, A, Ω, F, H, Hz)
-- Semi-transparent background with customizable appearance
-- Low-latency measurement updates
-
-## Requirements
-
-- OBS Studio (with development headers)
-- OpenTraceCapture library
-- Meson >= 0.60.0
-- Ninja build system
-- GCC/Clang with C++17 support
-- pkg-config
+- Real-time measurement display from USB/serial measurement devices
+- Auto-detection of connected devices
+- Manual configuration for serial port devices
+- Customizable display (size, precision, units)
+- Support for voltage, current, resistance, capacitance, inductance, and frequency measurements
 
 ## Building
 
-1. **Set up OBS development headers:**
-   
-   On most systems, you'll need to clone the OBS Studio source for headers:
-   ```bash
-   git clone https://github.com/obsproject/obs-studio.git
-   export OBS_INCLUDE_DIR=$(pwd)/obs-studio/libobs
-   ```
-   
-   Alternatively, if your system has OBS development packages:
-   ```bash
-   # Ubuntu/Debian
-   sudo apt install libobs-dev
-   
-   # In this case, no OBS_INCLUDE_DIR needed
-   ```
+### Prerequisites
 
-2. **Build and install OpenTraceCapture dependency:**
-   ```bash
-   git clone https://github.com/opentracelab/OpenTraceCapture.git
-   cd OpenTraceCapture
-   meson setup build --buildtype=release
-   meson compile -C build
-   meson install -C build  # or sudo meson install -C build
-   cd ..
-   ```
+**Ubuntu/Debian:**
+```bash
+sudo add-apt-repository ppa:obsproject/obs-studio
+sudo apt-get update
+sudo apt-get install obs-studio libsimde-dev meson ninja-build pkg-config \
+  libglib2.0-dev libusb-1.0-0-dev libzip-dev libftdi1-dev \
+  libserialport-dev libhidapi-dev
+```
 
-3. **Build the plugin:**
-   ```bash
-   meson setup build --buildtype=release
-   meson compile -C build
-   ```
+**Install OpenTraceCapture:**
+```bash
+# Download latest release from https://github.com/OpenTraceLab/OpenTraceCapture/releases
+wget https://github.com/OpenTraceLab/OpenTraceCapture/releases/download/v0.1.2-alpha.12/opentracecapture-linux.tar.gz
+sudo tar -xzf opentracecapture-linux.tar.gz -C /usr/local
+```
 
-4. **Install the plugin:**
-   ```bash
-   meson install -C build  # or sudo meson install -C build
-   ```
+### Build Steps
+
+```bash
+meson setup build --buildtype=release
+ninja -C build
+sudo ninja -C build install
+```
 
 ## Usage
 
-1. Start OBS Studio
-2. Add a new Source → "Measurement Overlay"
-3. Connect your DMM/LCR device
-4. The overlay will automatically detect and display measurements
+1. Launch OBS Studio
+2. Add a new source → "Measurement Overlay"
+3. Configure your device:
+   - **Auto-detect**: Select from dropdown of detected devices
+   - **Manual**: Specify driver, connection (e.g., `/dev/ttyUSB0`), and serial config (e.g., `9600/8n1`)
+4. Adjust display settings (width, height, font size, precision)
 
 ## Supported Devices
 
 Any device supported by OpenTraceCapture, including:
-- Keysight/Agilent multimeters
-- Fluke multimeters
-- Rigol multimeters
-- LCR meters with serial/USB interfaces
+- USB DMMs (Keysight, Rigol, Siglent, etc.)
+- Serial port DMMs (with manual configuration)
+- LCR meters
+- See [OpenTraceCapture documentation](https://github.com/OpenTraceLab/OpenTraceCapture) for full list
 
-## Configuration
+## Development
 
-The plugin automatically scans for available devices. Measurements are updated at 10Hz for smooth real-time display.
+Based on [obs-plugintemplate](https://github.com/obsproject/obs-plugintemplate) structure with modern OBS 30+ API.
 
-## Troubleshooting
+## License
 
-- Ensure your measurement device is connected and recognized by the system
-- Check that OpenTraceCapture can detect your device using `opentrace-cli --scan`
-- Verify OBS Studio can load the plugin by checking the log files
+GPL-2.0 - See COPYING file
 
 ## Community
 
-Join our community discussions on Discord: https://discord.gg/DsYwx59MPh
-
+Discord: https://discord.gg/DsYwx59MPh
