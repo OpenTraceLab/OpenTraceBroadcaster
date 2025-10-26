@@ -44,9 +44,11 @@ void MeasurementReader::read_loop() {
         return;
     }
     
+    // Scan all drivers with no specific options (auto-detect)
     GSList *drivers = otc_driver_list(context);
     for (GSList *l = drivers; l; l = l->next) {
         struct otc_dev_driver *driver = (struct otc_dev_driver *)l->data;
+        // Pass NULL for options to auto-detect devices
         GSList *devs = otc_driver_scan(driver, nullptr);
         if (devs) {
             devices = g_slist_concat(devices, devs);
