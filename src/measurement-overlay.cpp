@@ -88,6 +88,16 @@ static void measurement_overlay_update(void *data, obs_data_t *settings) {
     context->show_units = obs_data_get_bool(settings, "show_units");
     context->auto_range = obs_data_get_bool(settings, "auto_range");
     
+    // Restart reader with new device settings
+    const char *device = obs_data_get_string(settings, "device");
+    const char *driver = obs_data_get_string(settings, "driver");
+    const char *conn = obs_data_get_string(settings, "conn");
+    const char *serialcomm = obs_data_get_string(settings, "serialcomm");
+    
+    context->reader->stop();
+    context->reader->start(device ? device : "", driver ? driver : "",
+                          conn ? conn : "", serialcomm ? serialcomm : "");
+    
     // Update font size
     int font_size = (int)obs_data_get_int(settings, "font_size");
     if (context->font) {
@@ -185,26 +195,45 @@ static uint32_t measurement_overlay_get_height(void *data) {
 }
 
 static obs_properties_t *measurement_overlay_get_properties(void *data) {
+    struct measurement_overlay_source *context = 
+        (struct measurement_overlay_source *)data;
+    
     obs_properties_t *props = obs_properties_create();
     
+    // Device selection
+    obs_property_t *device_list = obs_properties_add_list(props, "device", "Device",
+        OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+    obs_property_list_add_string(device_list, "Auto-detect (first found)", "");
+    
+    if (context && context->reader) {
+        auto devices = context->reader->scan_devices();
+        for (const auto &dev : devices) {
+            obs_property_list_add_string(device_list, dev.display_name.c_str(), dev.id.c_str());
+        }
+    }
+    
+    // Manual configuration for devices not auto-detected
+    obs_properties_add_text(props, "driver", "Driver (optional)", OBS_TEXT_DEFAULT);
+    obs_properties_add_text(props, "conn", "Connection (e.g., /dev/ttyUSB0)", OBS_TEXT_DEFAULT);
+    obs_properties_add_text(props, "serialcomm", "Serial Config (e.g., 9600/8n1)", OBS_TEXT_DEFAULT);
+    
+    // Display settings
     obs_properties_add_int_slider(props, "width", "Width", 200, 800, 50);
     obs_properties_add_int_slider(props, "height", "Height", 50, 200, 10);
     obs_properties_add_int_slider(props, "font_size", "Font Size", 12, 48, 2);
-    
-    obs_property_t *precision = obs_properties_add_int_slider(props, "precision", 
-                                                             "Decimal Places", 0, 6, 1);
+    obs_properties_add_int_slider(props, "precision", "Decimal Places", 0, 6, 1);
     
     obs_properties_add_bool(props, "show_units", "Show Units");
     obs_properties_add_bool(props, "auto_range", "Auto Range");
-    
-    obs_properties_add_text(props, "info", 
-                           "Connect DMM/LCR device and measurements will appear automatically", 
-                           OBS_TEXT_INFO);
     
     return props;
 }
 
 static void measurement_overlay_get_defaults(obs_data_t *settings) {
+    obs_data_set_default_string(settings, "device", "");
+    obs_data_set_default_string(settings, "driver", "");
+    obs_data_set_default_string(settings, "conn", "");
+    obs_data_set_default_string(settings, "serialcomm", "");
     obs_data_set_default_int(settings, "width", 400);
     obs_data_set_default_int(settings, "height", 100);
     obs_data_set_default_int(settings, "font_size", 24);
