@@ -148,14 +148,15 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           wget -q https://github.com/OpenTraceLab/OpenTraceCapture/releases/download/${{ steps.otc-release.outputs.tag }}/opentracecapture-linux.tar.gz
-          sudo tar xzf opentracecapture-linux.tar.gz -C /usr
+          sudo tar xzf opentracecapture-linux.tar.gz -C /usr/local
           sudo ldconfig
 
       - name: Install OpenTraceCapture (macOS)
         if: runner.os == 'macOS'
         run: |
           wget -q https://github.com/OpenTraceLab/OpenTraceCapture/releases/download/${{ steps.otc-release.outputs.tag }}/opentracecapture-macos.tar.gz
-          sudo tar xzf opentracecapture-macos.tar.gz -C /usr/local
+          BREW_PREFIX=$(brew --prefix)
+          sudo tar xzf opentracecapture-macos.tar.gz -C $BREW_PREFIX
 
       - name: Install OpenTraceCapture (Windows)
         if: runner.os == 'Windows'
@@ -168,15 +169,17 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           if [ "${{ runner.os }}" = "macOS" ]; then
-            PREFIX=/usr/local
+            PREFIX=$(brew --prefix)
+            PLATFORM="macos"
           else
             PREFIX=/usr
+            PLATFORM="linux"
           fi
           meson setup build --buildtype=release --prefix=$PREFIX
           meson configure build
           meson compile -C build
           DESTDIR="${PWD}/install" meson install -C build
-          tar czf obs-measurement-overlay-${{ runner.os == 'macOS' && 'macos' || 'linux' }}.tar.gz -C install$PREFIX .
+          tar czf obs-measurement-overlay-${PLATFORM}.tar.gz -C install$PREFIX .
 
       - name: Build & test (Windows)
         if: runner.os == 'Windows'
@@ -192,11 +195,25 @@ jobs:
           MINGW_PATH=$(find install -type d -name mingw64 | head -1)
           tar czf obs-measurement-overlay-windows.tar.gz -C $MINGW_PATH .
 
-      - name: Upload artifact
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Upload artifact (Linux)
+        if: runner.os == 'Linux' && startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
-          name: obs-measurement-overlay-${{ runner.os == 'macOS' && 'macos' || runner.os == 'Windows' && 'windows' || 'linux' }}
+          name: obs-measurement-overlay-linux
+          path: obs-measurement-overlay-*.tar.gz
+
+      - name: Upload artifact (macOS)
+        if: runner.os == 'macOS' && startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: obs-measurement-overlay-macos
+          path: obs-measurement-overlay-*.tar.gz
+
+      - name: Upload artifact (Windows)
+        if: runner.os == 'Windows' && startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: obs-measurement-overlay-windows
           path: obs-measurement-overlay-*.tar.gz
 
       - name: Upload logs on failure
