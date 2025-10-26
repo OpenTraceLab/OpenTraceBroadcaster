@@ -12,7 +12,6 @@ MeasurementReader::~MeasurementReader() {
 bool MeasurementReader::start() {
     if (running) return true;
     
-    // Initialize OpenTraceCapture context
     if (otc_init(&context) != OTC_OK) {
         return false;
     }
@@ -37,37 +36,58 @@ void MeasurementReader::stop() {
 }
 
 void MeasurementReader::read_loop() {
+    struct otc_session *session = nullptr;
     GSList *devices = nullptr;
     
-    // Scan for DMM/LCR devices
-    otc_driver_scan_all(context, &devices);
-    
-    if (!devices) {
+    if (otc_session_new(context, &session) != OTC_OK) {
         running = false;
         return;
     }
     
-    // Use first available device
+    GSList *drivers = otc_driver_list(context);
+    for (GSList *l = drivers; l; l = l->next) {
+        struct otc_dev_driver *driver = (struct otc_dev_driver *)l->data;
+        GSList *devs = otc_driver_scan(driver, nullptr);
+        if (devs) {
+            devices = g_slist_concat(devices, devs);
+        }
+    }
+    
+    if (!devices) {
+        otc_session_destroy(session);
+        running = false;
+        return;
+    }
+    
     struct otc_dev_inst *sdi = (struct otc_dev_inst *)devices->data;
     
     if (otc_dev_open(sdi) != OTC_OK) {
         g_slist_free(devices);
+        otc_session_destroy(session);
         running = false;
         return;
     }
     
-    // Start acquisition
-    otc_session_start(context);
+    otc_session_dev_add(session, sdi);
+    otc_session_datafeed_callback_add(session, data_callback, this);
+    
+    if (otc_session_start(session) != OTC_OK) {
+        otc_dev_close(sdi);
+        g_slist_free(devices);
+        otc_session_destroy(session);
+        running = false;
+        return;
+    }
     
     while (running) {
-        // Process data packets
-        otc_session_run(context);
+        otc_session_run(session);
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     
-    otc_session_stop(context);
+    otc_session_stop(session);
     otc_dev_close(sdi);
     g_slist_free(devices);
+    otc_session_destroy(session);
 }
 
 void MeasurementReader::data_callback(const struct otc_dev_inst *sdi, 
@@ -80,12 +100,13 @@ void MeasurementReader::data_callback(const struct otc_dev_inst *sdi,
             (const struct otc_datafeed_analog *)packet->payload;
         
         if (analog->num_samples > 0) {
-            float value = analog->data[0];
-            
-            std::lock_guard<std::mutex> lock(reader->data_mutex);
-            reader->latest_value = value;
-            reader->latest_unit = analog->meaning->unit;
-            reader->has_new_data = true;
+            float value;
+            if (otc_analog_to_float(analog, &value) == OTC_OK) {
+                std::lock_guard<std::mutex> lock(reader->data_mutex);
+                reader->latest_value = value;
+                reader->latest_unit = analog->meaning->unit;
+                reader->has_new_data = true;
+            }
         }
     }
 }

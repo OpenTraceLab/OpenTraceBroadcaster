@@ -31,17 +31,24 @@ endif
 # Dependencies
 libobs_dep = dependency('libobs', required : false)
 if not libobs_dep.found()
-  # Fallback for systems without pkg-config for OBS (like macOS)
+  # Fallback: try standard include paths
   obs_include_dir = get_option('obs_include_dir')
   if obs_include_dir == ''
     obs_include_dir = run_command('printenv', 'OBS_INCLUDE_DIR', check: false).stdout().strip()
   endif
+  if obs_include_dir == ''
+    # Try standard locations
+    if host_machine.system() == 'linux'
+      obs_include_dir = '/usr/include/obs'
+    endif
+  endif
   if obs_include_dir != ''
     libobs_dep = declare_dependency(
-      include_directories: include_directories(obs_include_dir)
+      include_directories: include_directories(obs_include_dir),
+      link_args: ['-lobs']
     )
   else
-    libobs_dep = declare_dependency()
+    error('libobs not found. Install libobs-dev or set obs_include_dir option.')
   endif
 endif
 
