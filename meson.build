@@ -57,7 +57,6 @@ plugin_sources = [
 obs_measurement_overlay = shared_module('obs-measurement-overlay',
   plugin_sources,
   dependencies : [libobs_dep, libopentracecapture_dep],
-  include_directories : include_directories('../OpenTraceCapture/include'),
   name_suffix : plugin_suffix.substring(1),
   install : true,
   install_dir : get_option('libdir') / obs_plugin_dir
