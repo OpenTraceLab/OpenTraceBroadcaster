@@ -2,7 +2,8 @@
 #include <opentracecapture/opentracecapture.h>
 #include <thread>
 #include <chrono>
-#include <cstring>
+#include <vector>
+#include <string>
 
 MeasurementReader::MeasurementReader() : running(false), context(nullptr), selected_device(nullptr) {}
 
@@ -35,7 +36,7 @@ std::vector<DeviceInfo> MeasurementReader::scan_devices() {
         
         const char *vendor = otc_dev_inst_vendor_get(sdi);
         const char *model = otc_dev_inst_model_get(sdi);
-        const char *conn = otc_dev_inst_connection_id_get(sdi);
+        const char *conn = otc_dev_inst_connid_get(sdi);
         
         info.display_name = std::string(vendor ? vendor : "Unknown") + " " + 
                            std::string(model ? model : "Device");
@@ -104,8 +105,7 @@ void MeasurementReader::read_loop() {
         
         // Filter by driver name if specified
         if (!driver_.empty()) {
-            const char *drv_name = otc_dev_driver_name_get(driver);
-            if (!drv_name || driver_ != drv_name) {
+            if (!driver->name || driver_ != driver->name) {
                 continue;
             }
         }
@@ -151,7 +151,7 @@ void MeasurementReader::read_loop() {
     if (!device_id_.empty()) {
         for (GSList *l = devices; l; l = l->next) {
             struct otc_dev_inst *dev = (struct otc_dev_inst *)l->data;
-            const char *conn = otc_dev_inst_connection_id_get(dev);
+            const char *conn = otc_dev_inst_connid_get(dev);
             if (conn && device_id_ == conn) {
                 sdi = dev;
                 break;
