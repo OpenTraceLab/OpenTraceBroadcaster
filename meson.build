@@ -29,18 +29,17 @@ else
 endif
 
 # Dependencies
-libobs_dep = dependency('libobs', required : false)
-if not libobs_dep.found()
-  # Fallback: try standard include paths
+# libobs pkg-config adds C-only flags (-std=gnu17), so we manually construct the dependency
+libobs_found = run_command('pkg-config', '--exists', 'libobs', check: false).returncode() == 0
+if libobs_found
+  libobs_dep = declare_dependency(
+    include_directories: include_directories('/usr/include/obs'),
+    link_args: ['-lobs']
+  )
+else
   obs_include_dir = get_option('obs_include_dir')
   if obs_include_dir == ''
     obs_include_dir = run_command('printenv', 'OBS_INCLUDE_DIR', check: false).stdout().strip()
-  endif
-  if obs_include_dir == ''
-    # Try standard locations
-    if host_machine.system() == 'linux'
-      obs_include_dir = '/usr/include/obs'
-    endif
   endif
   if obs_include_dir != ''
     libobs_dep = declare_dependency(
@@ -48,7 +47,7 @@ if not libobs_dep.found()
       link_args: ['-lobs']
     )
   else
-    error('libobs not found. Install libobs-dev or set obs_include_dir option.')
+    error('libobs not found. Install obs-studio or set obs_include_dir option.')
   endif
 endif
 

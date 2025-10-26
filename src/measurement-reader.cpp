@@ -20,11 +20,10 @@ std::vector<DeviceInfo> MeasurementReader::scan_devices() {
     }
     
     GSList *all_devices = nullptr;
-    GSList *drivers = otc_driver_list(scan_ctx);
+    struct otc_dev_driver **drivers = otc_driver_list(scan_ctx);
     
-    for (GSList *l = drivers; l; l = l->next) {
-        struct otc_dev_driver *driver = (struct otc_dev_driver *)l->data;
-        GSList *devs = otc_driver_scan(driver, nullptr);
+    for (int i = 0; drivers[i]; i++) {
+        GSList *devs = otc_driver_scan(drivers[i], nullptr);
         if (devs) {
             all_devices = g_slist_concat(all_devices, devs);
         }
@@ -99,9 +98,9 @@ void MeasurementReader::read_loop() {
     }
     
     // Scan for devices with optional filters
-    GSList *drivers = otc_driver_list(context);
-    for (GSList *l = drivers; l; l = l->next) {
-        struct otc_dev_driver *driver = (struct otc_dev_driver *)l->data;
+    struct otc_dev_driver **drivers = otc_driver_list(context);
+    for (int i = 0; drivers[i]; i++) {
+        struct otc_dev_driver *driver = drivers[i];
         
         // Filter by driver name if specified
         if (!driver_.empty()) {
