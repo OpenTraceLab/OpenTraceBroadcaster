@@ -27,7 +27,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, windows-2022, macos-14]
+        os: [ubuntu-22.04]
+        # TODO: Re-enable after CMake migration
+        # os: [ubuntu-22.04, windows-2022, macos-14]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -112,7 +114,8 @@ jobs:
         run: |
           brew update
           brew install meson ninja pkg-config ccache glib libusb libzip libftdi \
-            hidapi libserialport obs
+            hidapi libserialport
+          brew install --cask obs
           echo "$(brew --prefix ccache)/libexec" >> "$GITHUB_PATH"
           echo "XDG_CACHE_HOME=$HOME/.cache"   >> "$GITHUB_ENV"
           echo "CCACHE_DIR=$HOME/.cache/ccache" >> "$GITHUB_ENV"
