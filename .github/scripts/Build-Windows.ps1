@@ -73,6 +73,10 @@ function Build {
     # Install OpenTraceCapture dependency
     Log-Group "Installing OpenTraceCapture..."
     
+    # Install glib dependency first
+    Log-Group "Installing glib dependency..."
+    vcpkg install glib:x64-windows
+    
     # Use GitHub token if available to avoid rate limits
     $Headers = @{}
     $Token = $env:GH_TOKEN ?? $env:GITHUB_TOKEN

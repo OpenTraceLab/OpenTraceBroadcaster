@@ -42,15 +42,20 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE
 
 find_package(OpenTraceCapture REQUIRED)
 
-# Find glib dependency (optional on Windows)
-if(NOT WIN32)
-  find_package(PkgConfig REQUIRED)
-  pkg_check_modules(GLIB REQUIRED glib-2.0)
-  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_LIBRARIES})
-  target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_INCLUDE_DIRS})
+# Find glib dependency (required by OpenTraceCapture)
+find_package(PkgConfig REQUIRED)
+
+# Add Homebrew paths for macOS
+if(APPLE)
+  set(ENV{PKG_CONFIG_PATH} "/opt/homebrew/lib/pkgconfig:/usr/local/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 endif()
 
+pkg_check_modules(GLIB REQUIRED glib-2.0)
+
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OpenTraceCapture::OpenTraceCapture)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_INCLUDE_DIRS})
+target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_LIBRARY_DIRS})
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_LIBRARIES})
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.cpp src/measurement-reader.cpp)
 
