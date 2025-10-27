@@ -8,4 +8,17 @@ if (( ! ${+commands[brew]} )) {
 
 brew bundle --file ${SCRIPT_HOME}/.Brewfile
 rehash
+
+# Install OpenTraceCapture dependency
+log_group 'Installing OpenTraceCapture...'
+local otc_latest_url=$(curl -s https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases | jq -r '.[0].assets[] | select(.name | test("macos.*\\.tar\\.gz$")) | .browser_download_url' | head -1)
+
+if [[ -z "${otc_latest_url}" ]]; then
+  log_error "Could not find OpenTraceCapture macOS release"
+  return 2
+fi
+
+curl -L -o /tmp/opentracecapture-macos.tar.gz "${otc_latest_url}"
+sudo tar -xzf /tmp/opentracecapture-macos.tar.gz -C /usr/local
+
 log_group
