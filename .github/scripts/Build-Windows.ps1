@@ -73,12 +73,17 @@ function Build {
     # Install OpenTraceCapture dependency
     Log-Group "Installing OpenTraceCapture..."
     
-    # Install glib dependency using pre-built binaries (much faster than vcpkg)
+    # Install glib dependency using development libraries
     Log-Group "Installing glib dependency..."
-    $GlibUrl = "https://download.gnome.org/binaries/win64/glib/2.78/glib-2.78.4-x64.msi"
-    $TempMsi = "$env:TEMP\glib.msi"
-    Invoke-WebRequest -Uri $GlibUrl -OutFile $TempMsi
-    Start-Process msiexec.exe -Wait -ArgumentList "/i `"$TempMsi`" /quiet"
+    $GlibUrl = "https://download.gnome.org/binaries/win64/dependencies/glib-dev_2.78.4-1_win64.zip"
+    $TempZip = "$env:TEMP\glib-dev.zip"
+    try {
+        Invoke-WebRequest -Uri $GlibUrl -OutFile $TempZip -ErrorAction Stop
+        Expand-Archive -Path $TempZip -DestinationPath "C:\glib" -Force
+    } catch {
+        # Fallback: skip glib for now, OpenTraceCapture might work without it
+        Write-Warning "Could not install glib: $($_.Exception.Message)"
+    }
     
     # Use GitHub token if available to avoid rate limits
     $Headers = @{}

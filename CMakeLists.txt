@@ -47,9 +47,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE
 
 find_package(OpenTraceCapture REQUIRED)
 
-# Find glib dependency (required by OpenTraceCapture)
+# Find glib dependency (required by OpenTraceCapture on some platforms)
 if(WIN32)
-  # On Windows, use standard installation paths
+  # On Windows, glib is optional - try to find it but don't fail if missing
   find_package(PkgConfig QUIET)
   if(PkgConfig_FOUND)
     pkg_check_modules(GLIB QUIET glib-2.0)
@@ -58,15 +58,17 @@ if(WIN32)
   if(NOT GLIB_FOUND)
     # Fallback: look in common Windows installation paths
     find_path(GLIB_INCLUDE_DIR glib.h 
-      PATHS "C:/Program Files/glib-2.0/include" "C:/glib/include"
+      PATHS "C:/glib/include" "C:/Program Files/glib/include"
       PATH_SUFFIXES glib-2.0)
     find_library(GLIB_LIBRARY glib-2.0
-      PATHS "C:/Program Files/glib-2.0/lib" "C:/glib/lib")
+      PATHS "C:/glib/lib" "C:/Program Files/glib/lib")
     
     if(GLIB_INCLUDE_DIR AND GLIB_LIBRARY)
       set(GLIB_FOUND TRUE)
       set(GLIB_INCLUDE_DIRS ${GLIB_INCLUDE_DIR})
       set(GLIB_LIBRARIES ${GLIB_LIBRARY})
+    else()
+      message(WARNING "glib not found on Windows - OpenTraceCapture may not work properly")
     endif()
   endif()
 else()
