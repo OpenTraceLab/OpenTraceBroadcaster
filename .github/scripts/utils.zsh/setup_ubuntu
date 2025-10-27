@@ -45,7 +45,8 @@ if (( ! (${skips[(Ie)all]} + ${skips[(Ie)deps]}) )) {
     obs-studio \
     pkg-config \
     libglib2.0-dev \
-    jq
+    jq \
+    ccache
 
   local -a _qt_packages=()
 

@@ -98,16 +98,21 @@ runs:
         : Create Summary 📊
 
         local -a ccache_data
-        if (( ${+RUNNER_DEBUG} )) {
-          setopt XTRACE
-          ccache_data=("${(fA)$(ccache -s -vv)}")
-        } else {
-          ccache_data=("${(fA)$(ccache -s)}")
-        }
+        if command -v ccache > /dev/null 2>&1; then
+          if (( ${+RUNNER_DEBUG} )) {
+            setopt XTRACE
+            ccache_data=("${(fA)$(ccache -s -vv)}")
+          } else {
+            ccache_data=("${(fA)$(ccache -s)}")
+          }
 
-        print '### ${{ runner.os }} Ccache Stats (${{ inputs.target }})' >> $GITHUB_STEP_SUMMARY
-        print '```' >> $GITHUB_STEP_SUMMARY
-        for line (${ccache_data}) {
-          print ${line} >> $GITHUB_STEP_SUMMARY
-        }
-        print '```' >> $GITHUB_STEP_SUMMARY
+          print '### ${{ runner.os }} Ccache Stats (${{ inputs.target }})' >> $GITHUB_STEP_SUMMARY
+          print '```' >> $GITHUB_STEP_SUMMARY
+          for line (${ccache_data}) {
+            print ${line} >> $GITHUB_STEP_SUMMARY
+          }
+          print '```' >> $GITHUB_STEP_SUMMARY
+        else
+          print '### ${{ runner.os }} Build Complete (${{ inputs.target }})' >> $GITHUB_STEP_SUMMARY
+          print 'Build completed successfully (ccache not available)' >> $GITHUB_STEP_SUMMARY
+        fi
