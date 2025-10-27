@@ -11,7 +11,7 @@ rehash
 
 # Install OpenTraceCapture dependency
 log_group 'Installing OpenTraceCapture...'
-local otc_latest_url=$(curl -s https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases | jq -r '.[0].assets[] | select(.name | test("macos.*\\.tar\\.gz$")) | .browser_download_url' | head -1)
+local otc_latest_url=$(curl -s https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases | jq -r 'if type == "array" then .[0].assets[] | select(.name | test("macos.*\\.tar\\.gz$")) | .browser_download_url else empty end' | head -1)
 
 if [[ -z "${otc_latest_url}" ]]; then
   log_error "Could not find OpenTraceCapture macOS release"
