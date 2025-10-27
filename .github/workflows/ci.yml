@@ -121,10 +121,19 @@ jobs:
       - name: Install OBS deps (macOS)
         if: runner.os == 'macOS'
         run: |
+          # Download obs-deps for dependencies
           wget -q https://github.com/obsproject/obs-deps/releases/download/2025-07-11/macos-deps-2025-07-11-universal.tar.xz
           sudo tar -xJf macos-deps-2025-07-11-universal.tar.xz -C /tmp
-          sudo cp -R /tmp/obsdeps/include/* $(brew --prefix)/include/
-          sudo cp -R /tmp/obsdeps/lib/* $(brew --prefix)/lib/
+          sudo cp -R /tmp/include/* $(brew --prefix)/include/
+          sudo cp -R /tmp/lib/* $(brew --prefix)/lib/
+          
+          # Download OBS source for headers
+          wget -q https://github.com/obsproject/obs-studio/archive/refs/tags/31.1.1.tar.gz
+          tar -xzf 31.1.1.tar.gz
+          sudo mkdir -p $(brew --prefix)/include/obs
+          sudo cp -r obs-studio-31.1.1/libobs/* $(brew --prefix)/include/obs/
+          
+          echo "OBS headers installed to $(brew --prefix)/include/obs"
 
       - name: MSYS2 setup
         if: runner.os == 'Windows'
@@ -146,13 +155,20 @@ jobs:
             mingw-w64-x86_64-hidapi
             unzip
 
-      - name: Install OBS Studio (Windows)
+      - name: Install OBS deps (Windows)
         if: runner.os == 'Windows'
         shell: msys2 {0}
         run: |
-          wget -q https://github.com/obsproject/obs-studio/releases/download/30.2.2/OBS-Studio-30.2.2-Windows.zip
-          unzip -q OBS-Studio-30.2.2-Windows.zip -d /mingw64
-          echo "OBS_INCLUDE_DIR=/mingw64/include/obs" >> "$GITHUB_ENV"
+          # Download obs-deps for dependencies
+          wget -q https://github.com/obsproject/obs-deps/releases/download/2025-07-11/windows-deps-2025-07-11-x64.zip
+          unzip -q windows-deps-2025-07-11-x64.zip -d /mingw64
+          
+          # Download OBS source for headers
+          wget -q https://github.com/obsproject/obs-studio/archive/refs/tags/31.1.1.tar.gz
+          tar -xzf 31.1.1.tar.gz
+          cp -r obs-studio-31.1.1/libobs /mingw64/include/obs
+          
+          echo "OBS headers installed to /mingw64/include/obs"
 
       - name: Install OpenTraceCapture (Linux)
         if: runner.os == 'Linux'
