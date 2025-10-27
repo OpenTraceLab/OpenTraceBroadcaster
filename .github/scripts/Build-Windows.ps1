@@ -70,6 +70,21 @@ function Build {
         '--config', $Configuration
     )
 
+    # Install OpenTraceCapture dependency
+    Log-Group "Installing OpenTraceCapture..."
+    $LatestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases" -Method Get
+    $WindowsAsset = $LatestRelease[0].assets | Where-Object { $_.name -match "windows.*\.tar\.gz$" } | Select-Object -First 1
+    
+    if (-not $WindowsAsset) {
+        throw "Could not find OpenTraceCapture Windows release"
+    }
+    
+    $TempFile = "$env:TEMP\opentracecapture-windows.tar.gz"
+    Invoke-WebRequest -Uri $WindowsAsset.browser_download_url -OutFile $TempFile
+    
+    # Extract using tar (available in Windows 10+)
+    tar -xzf $TempFile -C "C:\Program Files"
+    
     Log-Group "Configuring ${ProductName}..."
     Invoke-External cmake @CmakeArgs
 
