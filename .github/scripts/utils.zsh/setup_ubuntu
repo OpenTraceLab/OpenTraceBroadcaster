@@ -42,7 +42,9 @@ if (( ! (${skips[(Ie)all]} + ${skips[(Ie)deps]}) )) {
     build-essential \
     libgles2-mesa-dev \
     libsimde-dev \
-    obs-studio
+    obs-studio \
+    pkg-config \
+    libglib2.0-dev
 
   local -a _qt_packages=()
 
@@ -61,6 +63,16 @@ if (( ! (${skips[(Ie)all]} + ${skips[(Ie)deps]}) )) {
     )
   }
 
-  sudo apt-get install ${apt_args} ${_qt_packages}
+  sudo apt-get install ${_qt_packages}
+
+  # Install OpenTraceCapture dependency
+  log_group 'Installing OpenTraceCapture...'
+  local otc_version="v0.1.2-alpha.12"
+  local otc_url="https://github.com/OpenTraceLab/OpenTraceCapture/releases/download/${otc_version}/opentracecapture-linux.tar.gz"
+  
+  curl -L -o /tmp/opentracecapture-linux.tar.gz "${otc_url}"
+  sudo tar -xzf /tmp/opentracecapture-linux.tar.gz -C /usr/local
+  sudo ldconfig
+  
   log_group
 }
