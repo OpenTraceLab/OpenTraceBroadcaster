@@ -14,7 +14,7 @@ log_group 'Installing OpenTraceCapture...'
 
 # Use GitHub token if available to avoid rate limits
 local auth_header=""
-if [[ -n "${GITHUB_TOKEN}" ]]; then
+if [[ -n "${GITHUB_TOKEN:-}" ]]; then
   auth_header="Authorization: token ${GITHUB_TOKEN}"
 fi
 

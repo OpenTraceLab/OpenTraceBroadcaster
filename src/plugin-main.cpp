@@ -158,9 +158,9 @@ static void measurement_overlay_video_render(void *data, gs_effect_t *effect)
 
 	gs_render_start(true);
 	gs_vertex2f(0, 0);
-	gs_vertex2f(context->width, 0);
-	gs_vertex2f(0, context->height);
-	gs_vertex2f(context->width, context->height);
+	gs_vertex2f((float)context->width, 0);
+	gs_vertex2f(0, (float)context->height);
+	gs_vertex2f((float)context->width, (float)context->height);
 	gs_render_stop(GS_TRISTRIP);
 
 	gs_technique_end_pass(tech);

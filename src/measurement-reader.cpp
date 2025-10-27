@@ -4,11 +4,14 @@
 #ifdef _WIN32
 #include <time.h>
 #include <winsock2.h>
-// Define sys/time.h structures for Windows
+// Only define timeval if not already defined
+#ifndef _TIMEVAL_DEFINED
 struct timeval {
     long tv_sec;
     long tv_usec;
 };
+#define _TIMEVAL_DEFINED
+#endif
 #endif
 
 #include <opentracecapture/opentracecapture.h>
