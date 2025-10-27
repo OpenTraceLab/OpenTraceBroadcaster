@@ -20,7 +20,6 @@ find_path(
     "C:/Program Files/include"
     "/usr/local/include"
 )
-)
 
 find_library(
   OpenTraceCapture_LIBRARY 
