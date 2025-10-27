@@ -11,7 +11,19 @@ rehash
 
 # Install OpenTraceCapture dependency
 log_group 'Installing OpenTraceCapture...'
-local api_response=$(curl -s https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases)
+
+# Use GitHub token if available to avoid rate limits
+local auth_header=""
+if [[ -n "${GITHUB_TOKEN}" ]]; then
+  auth_header="Authorization: token ${GITHUB_TOKEN}"
+fi
+
+local api_response
+if [[ -n "${auth_header}" ]]; then
+  api_response=$(curl -s -H "${auth_header}" https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases)
+else
+  api_response=$(curl -s https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases)
+fi
 
 if [[ -z "${api_response}" ]] || [[ "${api_response}" == "null" ]]; then
   log_error "Failed to fetch OpenTraceCapture releases from GitHub API"

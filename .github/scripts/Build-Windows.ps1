@@ -72,7 +72,14 @@ function Build {
 
     # Install OpenTraceCapture dependency
     Log-Group "Installing OpenTraceCapture..."
-    $LatestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases" -Method Get
+    
+    # Use GitHub token if available to avoid rate limits
+    $Headers = @{}
+    if ($env:GITHUB_TOKEN) {
+        $Headers["Authorization"] = "token $env:GITHUB_TOKEN"
+    }
+    
+    $LatestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases" -Method Get -Headers $Headers
     $WindowsAsset = $LatestRelease[0].assets | Where-Object { $_.name -match ".*windows.*\.tar\.gz$" } | Select-Object -First 1
     
     if (-not $WindowsAsset) {
