@@ -192,7 +192,7 @@ void MeasurementReader::read_loop() {
     otc_session_destroy(session);
 }
 
-void MeasurementReader::data_callback(const struct otc_dev_inst *sdi, 
+void MeasurementReader::data_callback(const struct otc_dev_inst *sdi __attribute__((unused)), 
                                     const struct otc_datafeed_packet *packet, 
                                     void *cb_data) {
     MeasurementReader *reader = static_cast<MeasurementReader*>(cb_data);

@@ -4,11 +4,11 @@
 
 set -e
 
-# Setup build directory with Meson
-meson setup builddir --buildtype=release
+# Setup build directory with CMake
+cmake -B build -DCMAKE_BUILD_TYPE=Release
 
-# Build with Ninja
-meson compile -C builddir
+# Build with CMake
+cmake --build build --parallel
 
-echo "Build complete. To install, run: meson install -C builddir"
+echo "Build complete. Plugin built in: build/"
 echo "Then restart OBS Studio and look for 'Measurement Overlay' in Sources."

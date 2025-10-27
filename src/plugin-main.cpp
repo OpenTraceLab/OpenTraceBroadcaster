@@ -31,7 +31,7 @@ struct measurement_overlay_source {
 	std::string serialcomm;
 };
 
-static const char *measurement_overlay_get_name(void *unused)
+static const char *measurement_overlay_get_name(void *unused __attribute__((unused)))
 {
 	return obs_module_text("MeasurementOverlay");
 }
@@ -96,7 +96,7 @@ static void measurement_overlay_update(void *data, obs_data_t *settings)
 	                       conn ? conn : "", serialcomm ? serialcomm : "");
 }
 
-static void measurement_overlay_video_tick(void *data, float seconds)
+static void measurement_overlay_video_tick(void *data, float seconds __attribute__((unused)))
 {
 	struct measurement_overlay_source *context = (struct measurement_overlay_source *)data;
 	

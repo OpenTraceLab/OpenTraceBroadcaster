@@ -18,10 +18,20 @@ An OBS Studio plugin that displays real-time measurements from DMM (Digital Mult
 ```bash
 sudo add-apt-repository ppa:obsproject/obs-studio
 sudo apt-get update
-sudo apt-get install obs-studio libsimde-dev meson ninja-build pkg-config \
+sudo apt-get install obs-studio libsimde-dev cmake ninja-build pkg-config \
   libglib2.0-dev libusb-1.0-0-dev libzip-dev libftdi1-dev \
   libserialport-dev libhidapi-dev
 ```
+
+**macOS:**
+```bash
+brew install obs cmake ninja pkg-config glib libusb libzip libftdi libserialport hidapi
+```
+
+**Windows:**
+- Install Visual Studio 2022 with C++ support
+- Install CMake and Git
+- Dependencies will be automatically downloaded during build
 
 **Install OpenTraceCapture:**
 ```bash
@@ -32,11 +42,31 @@ sudo tar -xzf opentracecapture-linux.tar.gz -C /usr/local
 
 ### Build Steps
 
+**Linux/macOS:**
 ```bash
-meson setup build --buildtype=release
-ninja -C build
-sudo ninja -C build install
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
 ```
+
+**Windows:**
+```bash
+cmake -B build -G "Visual Studio 17 2022" -A x64
+cmake --build build --config Release
+```
+
+Or simply run:
+```bash
+./build.sh
+```
+
+## Cross-Platform Builds
+
+This plugin supports automated builds for:
+- **Windows x64**: Visual Studio 2022, automatic dependency management
+- **Ubuntu x64**: GCC with system packages
+- **macOS Universal**: Intel + Apple Silicon (ARM64) support
+
+GitHub Actions automatically build and package releases for all platforms.
 
 ## Usage
 
@@ -57,7 +87,7 @@ Any device supported by OpenTraceCapture, including:
 
 ## Development
 
-Based on [obs-plugintemplate](https://github.com/obsproject/obs-plugintemplate) structure with modern OBS 30+ API.
+Based on [obs-plugintemplate](https://github.com/obsproject/obs-plugintemplate) structure with modern OBS 30+ API and CMake build system.
 
 ## License
 

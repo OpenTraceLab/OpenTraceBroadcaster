@@ -1,1 +1,0 @@
-option('obs_include_dir', type: 'string', value: '', description: 'Path to OBS Studio include directory')
