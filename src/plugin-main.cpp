@@ -5,6 +5,13 @@
 #include "measurement-reader.h"
 #include <string>
 
+// Windows compatibility
+#ifdef _WIN32
+#define UNUSED
+#else
+#define UNUSED __attribute__((unused))
+#endif
+
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("obs-measurement-overlay", "en-US")
 
@@ -31,7 +38,7 @@ struct measurement_overlay_source {
 	std::string serialcomm;
 };
 
-static const char *measurement_overlay_get_name(void *unused __attribute__((unused)))
+static const char *measurement_overlay_get_name(void *unused UNUSED)
 {
 	return obs_module_text("MeasurementOverlay");
 }
@@ -96,7 +103,7 @@ static void measurement_overlay_update(void *data, obs_data_t *settings)
 			       serialcomm ? serialcomm : "");
 }
 
-static void measurement_overlay_video_tick(void *data, float seconds __attribute__((unused)))
+static void measurement_overlay_video_tick(void *data, float seconds UNUSED)
 {
 	struct measurement_overlay_source *context = (struct measurement_overlay_source *)data;
 

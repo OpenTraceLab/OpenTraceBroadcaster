@@ -1,4 +1,16 @@
 #include "measurement-reader.h"
+
+// Windows compatibility for OpenTraceCapture headers
+#ifdef _WIN32
+#include <time.h>
+#include <winsock2.h>
+// Define sys/time.h structures for Windows
+struct timeval {
+    long tv_sec;
+    long tv_usec;
+};
+#endif
+
 #include <opentracecapture/opentracecapture.h>
 #include <thread>
 #include <chrono>
