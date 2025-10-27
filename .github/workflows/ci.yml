@@ -27,9 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04]
-        # TODO: Re-enable after CMake migration
-        # os: [ubuntu-22.04, windows-2022, macos-14]
+        os: [ubuntu-22.04, windows-2022, macos-14]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -115,11 +113,18 @@ jobs:
           brew update
           brew install meson ninja pkg-config ccache glib libusb libzip libftdi \
             hidapi libserialport
-          brew install --cask obs
           echo "$(brew --prefix ccache)/libexec" >> "$GITHUB_PATH"
           echo "XDG_CACHE_HOME=$HOME/.cache"   >> "$GITHUB_ENV"
           echo "CCACHE_DIR=$HOME/.cache/ccache" >> "$GITHUB_ENV"
           mkdir -p "$HOME/.cache/ccache" "$HOME/.cache/meson"
+
+      - name: Install OBS deps (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          wget -q https://github.com/obsproject/obs-deps/releases/download/2025-07-11/macos-deps-2025-07-11-universal.tar.xz
+          sudo tar -xJf macos-deps-2025-07-11-universal.tar.xz -C /tmp
+          sudo cp -R /tmp/obsdeps/include/* $(brew --prefix)/include/
+          sudo cp -R /tmp/obsdeps/lib/* $(brew --prefix)/lib/
 
       - name: MSYS2 setup
         if: runner.os == 'Windows'
@@ -139,6 +144,7 @@ jobs:
             mingw-w64-x86_64-libftdi
             mingw-w64-x86_64-libserialport
             mingw-w64-x86_64-hidapi
+            unzip
 
       - name: Install OBS Studio (Windows)
         if: runner.os == 'Windows'
