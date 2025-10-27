@@ -12,12 +12,22 @@ rehash
 # Install OpenTraceCapture dependency
 log_group 'Installing OpenTraceCapture...'
 local api_response=$(curl -s https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases)
+log_info "API response type: $(echo "${api_response}" | jq -r 'type')"
+
 if [[ -z "${api_response}" ]] || [[ "${api_response}" == "null" ]]; then
   log_error "Failed to fetch OpenTraceCapture releases from GitHub API"
   return 2
 fi
 
-local otc_latest_url=$(echo "${api_response}" | jq -r '.[0].assets[] | select(.name | test(".*macos.*\\.tar\\.gz$")) | .browser_download_url' | head -1)
+# Check if response is an array or object
+local otc_latest_url
+if echo "${api_response}" | jq -e 'type == "array"' > /dev/null; then
+  otc_latest_url=$(echo "${api_response}" | jq -r '.[0].assets[] | select(.name | test(".*macos.*\\.tar\\.gz$")) | .browser_download_url' | head -1)
+else
+  # Handle rate limit or error response
+  log_error "GitHub API returned: $(echo "${api_response}" | jq -r '.message // "Unknown error"')"
+  return 2
+fi
 
 if [[ -z "${otc_latest_url}" ]]; then
   log_error "Could not find OpenTraceCapture macOS release"
