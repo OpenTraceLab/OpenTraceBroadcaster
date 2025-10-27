@@ -44,13 +44,18 @@ find_package(OpenTraceCapture REQUIRED)
 
 # Find glib dependency (required by OpenTraceCapture)
 if(WIN32)
-  # On Windows, try to find glib via vcpkg without pkg-config
-  find_path(GLIB_INCLUDE_DIR glib.h PATH_SUFFIXES glib-2.0)
-  find_library(GLIB_LIBRARY glib-2.0)
-  if(GLIB_INCLUDE_DIR AND GLIB_LIBRARY)
-    set(GLIB_FOUND TRUE)
-    set(GLIB_INCLUDE_DIRS ${GLIB_INCLUDE_DIR})
-    set(GLIB_LIBRARIES ${GLIB_LIBRARY})
+  # On Windows, use vcpkg's CMake integration
+  find_package(PkgConfig QUIET)
+  if(PkgConfig_FOUND)
+    pkg_check_modules(GLIB REQUIRED glib-2.0)
+  else()
+    # Fallback: assume vcpkg installed glib
+    find_package(unofficial-glib CONFIG QUIET)
+    if(unofficial-glib_FOUND)
+      set(GLIB_FOUND TRUE)
+      set(GLIB_LIBRARIES unofficial::glib::glib unofficial::glib::gio unofficial::glib::gobject)
+      set(GLIB_INCLUDE_DIRS "")
+    endif()
   endif()
 else()
   find_package(PkgConfig REQUIRED)
@@ -62,9 +67,18 @@ else()
 endif()
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OpenTraceCapture::OpenTraceCapture)
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_INCLUDE_DIRS})
-target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_LIBRARY_DIRS})
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_LIBRARIES})
+
+if(GLIB_FOUND)
+  if(WIN32 AND TARGET unofficial::glib::glib)
+    # Use vcpkg targets on Windows
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_LIBRARIES})
+  else()
+    # Use pkg-config results on other platforms
+    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_INCLUDE_DIRS})
+    target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_LIBRARY_DIRS})
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_LIBRARIES})
+  endif()
+endif()
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.cpp src/measurement-reader.cpp)
 
