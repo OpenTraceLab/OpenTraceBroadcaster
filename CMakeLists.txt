@@ -49,17 +49,24 @@ find_package(OpenTraceCapture REQUIRED)
 
 # Find glib dependency (required by OpenTraceCapture)
 if(WIN32)
-  # On Windows, use vcpkg's CMake integration
+  # On Windows, use standard installation paths
   find_package(PkgConfig QUIET)
   if(PkgConfig_FOUND)
-    pkg_check_modules(GLIB REQUIRED glib-2.0)
-  else()
-    # Fallback: assume vcpkg installed glib
-    find_package(unofficial-glib CONFIG QUIET)
-    if(unofficial-glib_FOUND)
+    pkg_check_modules(GLIB QUIET glib-2.0)
+  endif()
+  
+  if(NOT GLIB_FOUND)
+    # Fallback: look in common Windows installation paths
+    find_path(GLIB_INCLUDE_DIR glib.h 
+      PATHS "C:/Program Files/glib-2.0/include" "C:/glib/include"
+      PATH_SUFFIXES glib-2.0)
+    find_library(GLIB_LIBRARY glib-2.0
+      PATHS "C:/Program Files/glib-2.0/lib" "C:/glib/lib")
+    
+    if(GLIB_INCLUDE_DIR AND GLIB_LIBRARY)
       set(GLIB_FOUND TRUE)
-      set(GLIB_LIBRARIES unofficial::glib::glib unofficial::glib::gio unofficial::glib::gobject)
-      set(GLIB_INCLUDE_DIRS "")
+      set(GLIB_INCLUDE_DIRS ${GLIB_INCLUDE_DIR})
+      set(GLIB_LIBRARIES ${GLIB_LIBRARY})
     endif()
   endif()
 else()
@@ -74,15 +81,9 @@ endif()
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OpenTraceCapture::OpenTraceCapture)
 
 if(GLIB_FOUND)
-  if(WIN32 AND TARGET unofficial::glib::glib)
-    # Use vcpkg targets on Windows
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_LIBRARIES})
-  else()
-    # Use pkg-config results on other platforms
-    target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_INCLUDE_DIRS})
-    target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_LIBRARY_DIRS})
-    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_LIBRARIES})
-  endif()
+  target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_INCLUDE_DIRS})
+  target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_LIBRARY_DIRS})
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_LIBRARIES})
 endif()
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.cpp src/measurement-reader.cpp)
