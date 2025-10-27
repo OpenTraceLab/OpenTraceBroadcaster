@@ -44,4 +44,13 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_INCLUDE_DIRS})
 
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.cpp src/measurement-reader.cpp)
 
+# CPack configuration for packaging
+set(CPACK_PACKAGE_NAME "obs-measurement-overlay")
+set(CPACK_PACKAGE_VERSION "0.1.0")
+set(CPACK_PACKAGE_CONTACT "OpenTraceLab <noreply@opentracelab.com>")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "OBS Studio plugin for measurement overlay")
+set(CPACK_PACKAGE_DESCRIPTION "An OBS Studio plugin that displays real-time measurements from DMM and LCR meter devices as an overlay.")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "obs-studio, libglib2.0-0")
+include(CPack)
+
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
