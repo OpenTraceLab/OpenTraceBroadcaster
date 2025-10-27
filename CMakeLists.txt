@@ -13,6 +13,11 @@ include(helpers)
 
 add_library(${CMAKE_PROJECT_NAME} MODULE)
 
+# On Windows with vcpkg, tell it to use system libobs (provided by OBS build system)
+if(WIN32 AND DEFINED VCPKG_TOOLCHAIN)
+  set(CMAKE_FIND_PACKAGE_PREFER_CONFIG FALSE)
+endif()
+
 find_package(libobs REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
