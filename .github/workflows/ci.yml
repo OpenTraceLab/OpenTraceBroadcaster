@@ -27,7 +27,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, windows-2022, macos-14]
+        os: [ubuntu-22.04, macos-14]
+        # Windows needs OBS built from source or proper dev package
+        # TODO: Add Windows support
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -112,28 +114,11 @@ jobs:
         run: |
           brew update
           brew install meson ninja pkg-config ccache glib libusb libzip libftdi \
-            hidapi libserialport
+            hidapi libserialport obs
           echo "$(brew --prefix ccache)/libexec" >> "$GITHUB_PATH"
           echo "XDG_CACHE_HOME=$HOME/.cache"   >> "$GITHUB_ENV"
           echo "CCACHE_DIR=$HOME/.cache/ccache" >> "$GITHUB_ENV"
           mkdir -p "$HOME/.cache/ccache" "$HOME/.cache/meson"
-
-      - name: Install OBS deps (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          # Download obs-deps for dependencies
-          wget -q https://github.com/obsproject/obs-deps/releases/download/2025-07-11/macos-deps-2025-07-11-universal.tar.xz
-          sudo tar -xJf macos-deps-2025-07-11-universal.tar.xz -C /tmp
-          sudo cp -R /tmp/include/* $(brew --prefix)/include/
-          sudo cp -R /tmp/lib/* $(brew --prefix)/lib/
-          
-          # Download OBS source for headers
-          wget -q https://github.com/obsproject/obs-studio/archive/refs/tags/31.1.1.tar.gz
-          tar -xzf 31.1.1.tar.gz
-          sudo mkdir -p $(brew --prefix)/include/obs
-          sudo cp -r obs-studio-31.1.1/libobs/* $(brew --prefix)/include/obs/
-          
-          echo "OBS headers installed to $(brew --prefix)/include/obs"
 
       - name: MSYS2 setup
         if: runner.os == 'Windows'
