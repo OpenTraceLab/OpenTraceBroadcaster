@@ -43,14 +43,23 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE
 find_package(OpenTraceCapture REQUIRED)
 
 # Find glib dependency (required by OpenTraceCapture)
-find_package(PkgConfig REQUIRED)
-
-# Add Homebrew paths for macOS
-if(APPLE)
-  set(ENV{PKG_CONFIG_PATH} "/opt/homebrew/lib/pkgconfig:/usr/local/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+if(WIN32)
+  # On Windows, try to find glib via vcpkg without pkg-config
+  find_path(GLIB_INCLUDE_DIR glib.h PATH_SUFFIXES glib-2.0)
+  find_library(GLIB_LIBRARY glib-2.0)
+  if(GLIB_INCLUDE_DIR AND GLIB_LIBRARY)
+    set(GLIB_FOUND TRUE)
+    set(GLIB_INCLUDE_DIRS ${GLIB_INCLUDE_DIR})
+    set(GLIB_LIBRARIES ${GLIB_LIBRARY})
+  endif()
+else()
+  find_package(PkgConfig REQUIRED)
+  # Add Homebrew paths for macOS
+  if(APPLE)
+    set(ENV{PKG_CONFIG_PATH} "/opt/homebrew/lib/pkgconfig:/usr/local/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+  endif()
+  pkg_check_modules(GLIB REQUIRED glib-2.0)
 endif()
-
-pkg_check_modules(GLIB REQUIRED glib-2.0)
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OpenTraceCapture::OpenTraceCapture)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_INCLUDE_DIRS})

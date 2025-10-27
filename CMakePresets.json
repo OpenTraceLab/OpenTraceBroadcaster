@@ -37,12 +37,13 @@
     {
       "name": "macos-ci",
       "inherits": ["macos"],
-      "displayName": "macOS Universal CI build",
-      "description": "Build for macOS 12.0+ (Universal binary) for CI",
+      "displayName": "macOS ARM64 CI build",
+      "description": "Build for macOS 12.0+ (ARM64 only) for CI",
       "generator": "Xcode",
       "cacheVariables": {
         "CMAKE_COMPILE_WARNING_AS_ERROR": true,
-        "ENABLE_CCACHE": true
+        "ENABLE_CCACHE": true,
+        "CMAKE_OSX_ARCHITECTURES": "arm64"
       }
     },
     {
