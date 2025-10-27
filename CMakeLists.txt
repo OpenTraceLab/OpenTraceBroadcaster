@@ -13,11 +13,12 @@ include(helpers)
 
 add_library(${CMAKE_PROJECT_NAME} MODULE)
 
-# On Windows with vcpkg, tell it to use system libobs (provided by OBS build system)
-if(WIN32 AND DEFINED VCPKG_TOOLCHAIN)
-  set(CMAKE_FIND_PACKAGE_PREFER_CONFIG FALSE)
+# Skip Windows build due to ABI incompatibility between MSVC and OpenTraceCapture (built with GCC)
+if(WIN32)
+  message(FATAL_ERROR "Windows build not supported: OpenTraceCapture was built with GCC but OBS requires MSVC. ABI incompatibility prevents linking.")
 endif()
 
+# Find libobs (provided by OBS build system)
 find_package(libobs REQUIRED)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs)
 
