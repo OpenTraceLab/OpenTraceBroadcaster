@@ -42,9 +42,6 @@ pkg_check_modules(GLIB REQUIRED glib-2.0)
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE OpenTraceCapture::OpenTraceCapture ${GLIB_LIBRARIES})
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE ${GLIB_INCLUDE_DIRS})
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE 
-  src/plugin-main.cpp
-  src/measurement-reader.cpp
-)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.cpp src/measurement-reader.cpp)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
