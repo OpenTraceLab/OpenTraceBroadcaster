@@ -15,11 +15,22 @@ endif()
 find_path(
   OpenTraceCapture_INCLUDE_DIR
   NAMES opentracecapture.h
-  PATHS ${PC_OPENTRACECAPTURE_INCLUDE_DIRS} "C:/Program Files/include"
+  PATHS 
+    ${PC_OPENTRACECAPTURE_INCLUDE_DIRS} 
+    "C:/Program Files/include"
+    "/usr/local/include"
   PATH_SUFFIXES opentracecapture
 )
 
-find_library(OpenTraceCapture_LIBRARY NAMES opentracecapture PATHS ${PC_OPENTRACECAPTURE_LIBRARY_DIRS} "C:/Program Files/lib")
+find_library(
+  OpenTraceCapture_LIBRARY 
+  NAMES opentracecapture 
+  PATHS 
+    ${PC_OPENTRACECAPTURE_LIBRARY_DIRS} 
+    "C:/Program Files/lib"
+    "/usr/local/lib"
+    "/usr/local/lib/x86_64-linux-gnu"
+)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
