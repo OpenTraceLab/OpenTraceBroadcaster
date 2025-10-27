@@ -32,15 +32,6 @@ find_library(
     "/usr/local/lib/x86_64-linux-gnu"
 )
 
-# Debug output
-if(WIN32)
-  message(STATUS "OpenTraceCapture search paths: C:/Program Files/lib;C:/Program Files/bin")
-  file(GLOB LIB_FILES "C:/Program Files/lib/*opentrace*")
-  message(STATUS "Found files in C:/Program Files/lib: ${LIB_FILES}")
-  file(GLOB BIN_FILES "C:/Program Files/bin/*opentrace*")  
-  message(STATUS "Found files in C:/Program Files/bin: ${BIN_FILES}")
-endif()
-
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
   OpenTraceCapture

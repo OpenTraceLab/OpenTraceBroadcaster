@@ -12,7 +12,6 @@ rehash
 # Install OpenTraceCapture dependency
 log_group 'Installing OpenTraceCapture...'
 local api_response=$(curl -s https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases)
-log_info "API response type: $(echo "${api_response}" | jq -r 'type')"
 
 if [[ -z "${api_response}" ]] || [[ "${api_response}" == "null" ]]; then
   log_error "Failed to fetch OpenTraceCapture releases from GitHub API"
