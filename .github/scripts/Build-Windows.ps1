@@ -75,8 +75,10 @@ function Build {
     
     # Use GitHub token if available to avoid rate limits
     $Headers = @{}
-    if ($env:GITHUB_TOKEN) {
-        $Headers["Authorization"] = "token $env:GITHUB_TOKEN"
+    $Token = $env:GH_TOKEN ?? $env:GITHUB_TOKEN
+    if ($Token) {
+        $Headers["Authorization"] = "Bearer $Token"
+        $Headers["Accept"] = "application/vnd.github+json"
     }
     
     $LatestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases" -Method Get -Headers $Headers
