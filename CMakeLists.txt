@@ -36,6 +36,10 @@ endif()
 
 # Find libopentracecapture dependency
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/common")
+
+# Add src directory to include path for Windows compatibility headers
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+
 find_package(OpenTraceCapture REQUIRED)
 
 # Find glib dependency (optional on Windows)

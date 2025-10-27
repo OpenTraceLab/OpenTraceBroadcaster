@@ -1,5 +1,4 @@
 #include <obs-module.h>
-#include <obs-frontend-api.h>
 #include <util/platform.h>
 #include <graphics/image-file.h>
 #include "measurement-reader.h"
