@@ -67,10 +67,9 @@ if (( ! (${skips[(Ie)all]} + ${skips[(Ie)deps]}) )) {
 
   # Install OpenTraceCapture dependency
   log_group 'Installing OpenTraceCapture...'
-  local otc_version="v0.1.2-alpha.12"
-  local otc_url="https://github.com/OpenTraceLab/OpenTraceCapture/releases/download/${otc_version}/opentracecapture-linux.tar.gz"
+  local otc_latest_url=$(curl -s https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases/latest | jq -r '.assets[] | select(.name | contains("linux")) | .browser_download_url')
   
-  curl -L -o /tmp/opentracecapture-linux.tar.gz "${otc_url}"
+  curl -L -o /tmp/opentracecapture-linux.tar.gz "${otc_latest_url}"
   sudo tar -xzf /tmp/opentracecapture-linux.tar.gz -C /usr/local
   sudo ldconfig
   
