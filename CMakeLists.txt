@@ -13,9 +13,9 @@ include(helpers)
 
 add_library(${CMAKE_PROJECT_NAME} MODULE)
 
-# Skip Windows build due to ABI incompatibility between MSVC and OpenTraceCapture (built with GCC)
-if(WIN32)
-  message(FATAL_ERROR "Windows build not supported: OpenTraceCapture was built with GCC but OBS requires MSVC. ABI incompatibility prevents linking.")
+# Windows build now supported with MSVC-built dependencies
+if(WIN32 AND NOT MSVC)
+  message(FATAL_ERROR "Windows build requires MSVC compiler for ABI compatibility with OBS Studio. Please use Visual Studio or clang-cl.")
 endif()
 
 # Find libobs (provided by OBS build system)

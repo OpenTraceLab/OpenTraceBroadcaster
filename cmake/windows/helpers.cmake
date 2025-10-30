@@ -4,6 +4,65 @@ include_guard(GLOBAL)
 
 include(helpers_common)
 
+# Set up Windows-specific compiler flags for MSVC
+function(setup_msvc_flags target)
+  if(MSVC)
+    target_compile_definitions(${target} PRIVATE
+      WIN32_LEAN_AND_MEAN
+      NOMINMAX
+      _CRT_SECURE_NO_WARNINGS
+      _WIN32_WINNT=0x0601
+      WINVER=0x0601
+    )
+    
+    # Enable modern C++ features
+    target_compile_features(${target} PRIVATE cxx_std_17)
+    
+    # Set warning level
+    target_compile_options(${target} PRIVATE /W3)
+    
+    # Enable parallel compilation
+    target_compile_options(${target} PRIVATE /MP)
+  endif()
+endfunction()
+
+# Find and configure MSVC-built dependencies
+function(setup_msvc_dependencies target)
+  if(WIN32 AND MSVC)
+    # Ensure we're using MSVC-built dependencies
+    message(STATUS "Setting up MSVC dependencies for ${target}")
+    
+    # Add Windows system libraries
+    target_link_libraries(${target} PRIVATE
+      ws2_32
+      setupapi
+      advapi32
+      user32
+      kernel32
+    )
+  endif()
+endfunction()
+
+# Copy DLLs to output directory for MSVC builds
+function(copy_dependency_dlls target)
+  if(WIN32 AND MSVC)
+    # Copy all DLLs from deps directory
+    file(GLOB_RECURSE DEPENDENCY_DLLS 
+      "${CMAKE_CURRENT_SOURCE_DIR}/deps/*/bin/*.dll"
+      "${CMAKE_CURRENT_SOURCE_DIR}/deps/*/*.dll"
+    )
+    
+    foreach(DLL_FILE ${DEPENDENCY_DLLS})
+      add_custom_command(TARGET ${target} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${DLL_FILE}"
+        "$<TARGET_FILE_DIR:${target}>"
+        COMMENT "Copying ${DLL_FILE} to output directory"
+      )
+    endforeach()
+  endif()
+endfunction()
+
 # set_target_properties_plugin: Set target properties for use in obs-studio
 function(set_target_properties_plugin target)
   set(options "")
@@ -21,6 +80,13 @@ function(set_target_properties_plugin target)
   string(TIMESTAMP CURRENT_YEAR "%Y")
 
   set_target_properties(${target} PROPERTIES VERSION 0 SOVERSION ${PLUGIN_VERSION})
+
+  # Set up MSVC-specific properties
+  if(MSVC)
+    setup_msvc_flags(${target})
+    setup_msvc_dependencies(${target})
+    copy_dependency_dlls(${target})
+  endif()
 
   install(TARGETS ${target} RUNTIME DESTINATION "${target}/bin/64bit" LIBRARY DESTINATION "${target}/bin/64bit")
 
