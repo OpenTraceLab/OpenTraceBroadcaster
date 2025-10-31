@@ -46,7 +46,8 @@ opentracecapture_dep = dependency('opentracecapture', required: false)
 if not opentracecapture_dep.found()
   opentracecapture_lib = cc.find_library('opentracecapture', dirs: ['/usr/local/lib', '/usr/local/lib/x86_64-linux-gnu'])
   opentracecapture_inc = include_directories('/usr/local/include')
-  opentracecapture_dep = declare_dependency(dependencies: opentracecapture_lib, include_directories: opentracecapture_inc)
+  glib_dep = dependency('glib-2.0')
+  opentracecapture_dep = declare_dependency(dependencies: [opentracecapture_lib, glib_dep], include_directories: opentracecapture_inc)
 endif
 deps += opentracecapture_dep
 
