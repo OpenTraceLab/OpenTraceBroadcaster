@@ -4,58 +4,32 @@
 #include "measurement-reader.h"
 #include <string>
 
-OBS_DECLARE_MODULE()
-OBS_MODULE_USE_DEFAULT_LOCALE("obs-measurement-overlay", "en-US")
-
 struct measurement_overlay_source {
     obs_source_t *source;
     MeasurementReader *reader;
-    
     uint32_t width;
     uint32_t height;
-    gs_font_t *font;
-    
     char display_text[256];
     bool text_updated;
-    
-    // Settings
-    int precision;
-    bool show_units;
-    bool auto_range;
 };
 
 static const char *measurement_overlay_get_name(void *unused) {
+    UNUSED_PARAMETER(unused);
     return "Measurement Overlay";
 }
 
 static void *measurement_overlay_create(obs_data_t *settings, obs_source_t *source) {
+    UNUSED_PARAMETER(settings);
+    
     struct measurement_overlay_source *context = 
         (struct measurement_overlay_source *)bzalloc(sizeof(struct measurement_overlay_source));
     
     context->source = source;
     context->reader = new MeasurementReader();
-    context->width = 400;
-    context->height = 100;
-    
-    // Create font
-    struct gs_font_desc font_desc = {};
-    font_desc.size = 24;
-    font_desc.flags = GS_FONT_BOLD;
-    strcpy(font_desc.face, "Arial");
-    
-    obs_enter_graphics();
-    context->font = gs_font_create(&font_desc);
-    obs_leave_graphics();
-    
+    context->width = 800;
+    context->height = 600;
     strcpy(context->display_text, "No measurement data");
-    
-    // Initialize settings
-    context->precision = 3;
-    context->show_units = true;
-    context->auto_range = true;
-    
-    // Start measurement reader
-    context->reader->start();
+    context->text_updated = true;
     
     return context;
 }
@@ -64,204 +38,80 @@ static void measurement_overlay_destroy(void *data) {
     struct measurement_overlay_source *context = 
         (struct measurement_overlay_source *)data;
     
-    if (context->reader) {
-        context->reader->stop();
+    if (context) {
         delete context->reader;
+        bfree(context);
     }
-    
-    obs_enter_graphics();
-    if (context->font) {
-        gs_font_destroy(context->font);
-    }
-    obs_leave_graphics();
-    
-    bfree(context);
 }
 
 static void measurement_overlay_update(void *data, obs_data_t *settings) {
+    UNUSED_PARAMETER(settings);
     struct measurement_overlay_source *context = 
         (struct measurement_overlay_source *)data;
     
-    context->width = (uint32_t)obs_data_get_int(settings, "width");
-    context->height = (uint32_t)obs_data_get_int(settings, "height");
-    context->precision = (int)obs_data_get_int(settings, "precision");
-    context->show_units = obs_data_get_bool(settings, "show_units");
-    context->auto_range = obs_data_get_bool(settings, "auto_range");
-    
-    // Restart reader with new device settings
-    const char *device = obs_data_get_string(settings, "device");
-    const char *driver = obs_data_get_string(settings, "driver");
-    const char *conn = obs_data_get_string(settings, "conn");
-    const char *serialcomm = obs_data_get_string(settings, "serialcomm");
-    
-    context->reader->stop();
-    context->reader->start(device ? device : "", driver ? driver : "",
-                          conn ? conn : "", serialcomm ? serialcomm : "");
-    
-    // Update font size
-    int font_size = (int)obs_data_get_int(settings, "font_size");
-    if (context->font) {
-        obs_enter_graphics();
-        gs_font_destroy(context->font);
-        
-        struct gs_font_desc font_desc = {};
-        font_desc.size = font_size;
-        font_desc.flags = GS_FONT_BOLD;
-        strcpy(font_desc.face, "Arial");
-        context->font = gs_font_create(&font_desc);
-        obs_leave_graphics();
+    if (context && context->reader) {
+        float value;
+        int unit;
+        if (context->reader->get_latest_measurement(value, unit)) {
+            snprintf(context->display_text, sizeof(context->display_text), 
+                    "%.3f (unit: %d)", value, unit);
+            context->text_updated = true;
+        }
     }
 }
 
 static void measurement_overlay_video_tick(void *data, float seconds) {
-    struct measurement_overlay_source *context = 
-        (struct measurement_overlay_source *)data;
-    
-    float value;
-    int unit;
-    
-    if (context->reader->get_latest_measurement(value, unit)) {
-        const char *unit_str = "";
-        if (context->show_units) {
-            switch (unit) {
-                case 1: unit_str = " A"; break;  // Current
-                case 2: unit_str = " Ω"; break;  // Resistance
-                case 3: unit_str = " F"; break;  // Capacitance
-                case 4: unit_str = " H"; break;  // Inductance
-                case 5: unit_str = " Hz"; break; // Frequency
-                default: unit_str = " V"; break; // Voltage
-            }
-        }
-        
-        snprintf(context->display_text, sizeof(context->display_text), 
-                "%.*f%s", context->precision, value, unit_str);
-        context->text_updated = true;
-    }
+    UNUSED_PARAMETER(seconds);
+    measurement_overlay_update(data, nullptr);
 }
 
 static void measurement_overlay_video_render(void *data, gs_effect_t *effect) {
+    UNUSED_PARAMETER(effect);
     struct measurement_overlay_source *context = 
         (struct measurement_overlay_source *)data;
     
-    if (!context->font) return;
+    if (!context) return;
     
-    // Set up rendering
-    gs_effect_t *solid_effect = obs_get_base_effect(OBS_EFFECT_SOLID);
-    gs_technique_t *tech = gs_effect_get_technique(solid_effect, "Solid");
+    // Simple colored rectangle as placeholder for text
+    gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+    gs_eparam_t *color = gs_effect_get_param_by_name(solid, "color");
     
-    // Draw background
-    gs_effect_set_color(gs_effect_get_param_by_name(solid_effect, "color"), 
-                       0x80000000); // Semi-transparent black
+    struct vec4 colorVal;
+    vec4_set(&colorVal, 1.0f, 1.0f, 1.0f, 1.0f); // White
+    gs_effect_set_vec4(color, &colorVal);
     
+    gs_technique_t *tech = gs_effect_get_technique(solid, "Solid");
     gs_technique_begin(tech);
     gs_technique_begin_pass(tech, 0);
     
-    gs_matrix_push();
-    gs_matrix_identity();
-    gs_render_start(true);
-    
-    gs_vertex2f(0, 0);
-    gs_vertex2f(context->width, 0);
-    gs_vertex2f(context->width, context->height);
-    gs_vertex2f(0, context->height);
-    
-    gs_render_stop(GS_TRISTRIP);
-    gs_matrix_pop();
+    gs_draw_sprite(nullptr, 0, 200, 50); // Simple rectangle
     
     gs_technique_end_pass(tech);
     gs_technique_end(tech);
-    
-    // Draw text
-    struct gs_font_render_params params = {};
-    params.font = context->font;
-    params.text = context->display_text;
-    params.x = 10;
-    params.y = 30;
-    params.color = 0xFFFFFFFF; // White text
-    
-    gs_font_render(&params);
 }
 
 static uint32_t measurement_overlay_get_width(void *data) {
     struct measurement_overlay_source *context = 
         (struct measurement_overlay_source *)data;
-    return context->width;
+    return context ? context->width : 0;
 }
 
 static uint32_t measurement_overlay_get_height(void *data) {
     struct measurement_overlay_source *context = 
         (struct measurement_overlay_source *)data;
-    return context->height;
+    return context ? context->height : 0;
 }
 
-static obs_properties_t *measurement_overlay_get_properties(void *data) {
-    struct measurement_overlay_source *context = 
-        (struct measurement_overlay_source *)data;
-    
-    obs_properties_t *props = obs_properties_create();
-    
-    // Device selection
-    obs_property_t *device_list = obs_properties_add_list(props, "device", "Device",
-        OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
-    obs_property_list_add_string(device_list, "Auto-detect (first found)", "");
-    
-    if (context && context->reader) {
-        auto devices = context->reader->scan_devices();
-        for (const auto &dev : devices) {
-            obs_property_list_add_string(device_list, dev.display_name.c_str(), dev.id.c_str());
-        }
-    }
-    
-    // Manual configuration for devices not auto-detected
-    obs_properties_add_text(props, "driver", "Driver (optional)", OBS_TEXT_DEFAULT);
-    obs_properties_add_text(props, "conn", "Connection (e.g., /dev/ttyUSB0)", OBS_TEXT_DEFAULT);
-    obs_properties_add_text(props, "serialcomm", "Serial Config (e.g., 9600/8n1)", OBS_TEXT_DEFAULT);
-    
-    // Display settings
-    obs_properties_add_int_slider(props, "width", "Width", 200, 800, 50);
-    obs_properties_add_int_slider(props, "height", "Height", 50, 200, 10);
-    obs_properties_add_int_slider(props, "font_size", "Font Size", 12, 48, 2);
-    obs_properties_add_int_slider(props, "precision", "Decimal Places", 0, 6, 1);
-    
-    obs_properties_add_bool(props, "show_units", "Show Units");
-    obs_properties_add_bool(props, "auto_range", "Auto Range");
-    
-    return props;
-}
-
-static void measurement_overlay_get_defaults(obs_data_t *settings) {
-    obs_data_set_default_string(settings, "device", "");
-    obs_data_set_default_string(settings, "driver", "");
-    obs_data_set_default_string(settings, "conn", "");
-    obs_data_set_default_string(settings, "serialcomm", "");
-    obs_data_set_default_int(settings, "width", 400);
-    obs_data_set_default_int(settings, "height", 100);
-    obs_data_set_default_int(settings, "font_size", 24);
-    obs_data_set_default_int(settings, "precision", 3);
-    obs_data_set_default_bool(settings, "show_units", true);
-    obs_data_set_default_bool(settings, "auto_range", true);
-}
-
-static struct obs_source_info measurement_overlay_source_info = {
-    .id = "measurement_overlay",
+struct obs_source_info measurement_overlay_source_info = {
+    .id = "measurement_overlay_source",
     .type = OBS_SOURCE_TYPE_INPUT,
-    .output_flags = OBS_SOURCE_VIDEO | OBS_SOURCE_CUSTOM_DRAW,
+    .output_flags = OBS_SOURCE_VIDEO,
     .get_name = measurement_overlay_get_name,
     .create = measurement_overlay_create,
     .destroy = measurement_overlay_destroy,
+    .get_width = measurement_overlay_get_width,
+    .get_height = measurement_overlay_get_height,
     .update = measurement_overlay_update,
     .video_tick = measurement_overlay_video_tick,
     .video_render = measurement_overlay_video_render,
-    .get_width = measurement_overlay_get_width,
-    .get_height = measurement_overlay_get_height,
-    .get_properties = measurement_overlay_get_properties,
-    .get_defaults = measurement_overlay_get_defaults,
 };
-
-bool obs_module_load(void) {
-    obs_register_source(&measurement_overlay_source_info);
-    return true;
-}
-
-void obs_module_unload(void) {
-}

@@ -249,6 +249,11 @@ bool obs_module_load(void)
 	info.video_render = measurement_overlay_video_render;
 
 	obs_register_source(&info);
+	
+	// Register the external source from measurement-overlay.cpp
+	extern struct obs_source_info measurement_overlay_source_info;
+	obs_register_source(&measurement_overlay_source_info);
+	
 	blog(LOG_INFO, "measurement overlay plugin loaded (version %s)", "0.1.0");
 	return true;
 }

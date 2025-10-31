@@ -1,14 +1,15 @@
 project('obs-measurement-overlay', ['c', 'cpp'],
   version: '0.1.0',
-  default_options: ['cpp_std=c++17', 'warning_level=2'])
+  default_options: ['c_std=c11', 'cpp_std=c++17', 'warning_level=2'])
+
+# Import filesystem module
+fs = import('fs')
 
 # Get version from buildspec.json
-buildspec = files('buildspec.json')
-version_info = run_command('python3', '-c', 
-  'import json; print(json.load(open("buildspec.json"))["version"])', 
-  check: false)
-if version_info.returncode() == 0
-  project_version = version_info.stdout().strip()
+if fs.exists('buildspec.json')
+  buildspec_content = run_command('cat', 'buildspec.json', check: true)
+  # Use project version as fallback
+  project_version = meson.project_version()
 else
   project_version = meson.project_version()
 endif
@@ -28,19 +29,20 @@ deps = []
 
 # Find OBS Studio
 if is_linux
-  # Use system libobs-dev on Ubuntu
-  libobs_dep = dependency('libobs', required: true)
-  deps += libobs_dep
+  # Override libobs to avoid conflicting compiler flags
+  deps += declare_dependency(
+    compile_args: ['-DHAVE_OBSCONFIG_H'],
+    link_args: ['-lobs'],
+    include_directories: include_directories('/usr/include/obs')
+  )
 else
   # Use OBS build system on Windows/macOS
-  libobs_dep = dependency('libobs', required: true, 
-    fallback: ['obs-studio', 'libobs_dep'])
+  libobs_dep = dependency('libobs', required: true)
   deps += libobs_dep
 endif
 
 # Find OpenTraceCapture
-opentracecapture_dep = dependency('opentracecapture', required: true,
-  fallback: ['opentracecapture', 'opentracecapture_dep'])
+opentracecapture_dep = dependency('opentracecapture', required: true)
 deps += opentracecapture_dep
 
 # Platform-specific dependencies
