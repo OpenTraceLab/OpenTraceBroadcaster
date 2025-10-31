@@ -175,9 +175,11 @@ jobs:
 
       - name: Download OpenTraceCapture 📦
         run: |
-          # Download or build OpenTraceCapture for Ubuntu
-          mkdir -p deps/opentracecapture
-          # This would download Ubuntu build of OpenTraceCapture
+          # Download latest OpenTraceCapture release for Ubuntu
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases/latest | jq -r '.tag_name')
+          wget "https://github.com/OpenTraceLab/OpenTraceCapture/releases/download/${LATEST_RELEASE}/opentracecapture-linux.tar.gz"
+          mkdir -p /usr/local
+          sudo tar -xzf opentracecapture-linux.tar.gz -C /usr/local --strip-components=1
 
       - name: Build with Meson 🧱
         run: |
