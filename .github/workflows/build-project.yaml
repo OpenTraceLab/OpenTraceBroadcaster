@@ -196,20 +196,11 @@ jobs:
           # Download latest OpenTraceCapture release for Ubuntu
           LATEST_RELEASE=$(curl -s https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases | jq -r '.[0].tag_name')
           echo "Using release: $LATEST_RELEASE"
-          wget "https://github.com/OpenTraceLab/OpenTraceCapture/releases/download/${LATEST_RELEASE}/opentracecapture-linux.zip"
-          unzip opentracecapture-linux.zip
+          wget "https://github.com/OpenTraceLab/OpenTraceCapture/releases/download/${LATEST_RELEASE}/opentracecapture-linux.tar.gz"
           sudo tar -xzf opentracecapture-linux.tar.gz -C /usr/local --strip-components=1
           
-          # Set pkg-config path and verify
-          export PKG_CONFIG_PATH="/usr/local/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH"
+          # Set pkg-config path
           echo "PKG_CONFIG_PATH=/usr/local/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
-          
-          # Debug pkg-config
-          echo "Checking pkg-config files:"
-          ls -la /usr/local/lib/x86_64-linux-gnu/pkgconfig/
-          echo "Testing pkg-config:"
-          pkg-config --exists opentracecapture && echo "opentracecapture found" || echo "opentracecapture NOT found"
-          pkg-config --cflags opentracecapture || echo "Failed to get cflags"
 
       - name: Build with Meson 🧱
         run: |
