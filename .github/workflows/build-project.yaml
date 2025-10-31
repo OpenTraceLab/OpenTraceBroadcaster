@@ -132,6 +132,23 @@ jobs:
         with:
           arch: x64
 
+      - name: Install pkg-config
+        run: |
+          choco install pkgconfiglite
+
+      - name: Download OBS Studio
+        run: |
+          # Get latest OBS Studio release
+          $obsVersion = (Invoke-RestMethod -Uri "https://api.github.com/repos/obsproject/obs-studio/releases/latest").tag_name
+          Write-Host "Using OBS Studio version: $obsVersion"
+          
+          Invoke-WebRequest -Uri "https://github.com/obsproject/obs-studio/releases/download/$obsVersion/OBS-Studio-$obsVersion-Windows-x64.zip" -OutFile "obs-studio.zip"
+          Expand-Archive -Path "obs-studio.zip" -DestinationPath "obs-studio"
+          
+          # Set environment variables for OBS
+          echo "OBS_ROOT=$env:GITHUB_WORKSPACE\obs-studio" >> $env:GITHUB_ENV
+          echo "$env:GITHUB_WORKSPACE\obs-studio\bin\64bit" >> $env:GITHUB_PATH
+
       - name: Download Dependencies 📦
         run: |
           .\download-deps.ps1 -OutputDir "deps"
@@ -177,9 +194,8 @@ jobs:
         run: |
           # Download latest OpenTraceCapture release for Ubuntu
           echo "Checking available releases..."
-          curl -s https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases | jq -r '.[].tag_name' | head -5
-          LATEST_RELEASE=$(curl -s https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases/latest | jq -r '.tag_name')
-          echo "Latest release: $LATEST_RELEASE"
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases | jq -r '.[0].tag_name')
+          echo "Using release: $LATEST_RELEASE"
           wget "https://github.com/OpenTraceLab/OpenTraceCapture/releases/download/${LATEST_RELEASE}/opentracecapture-linux.tar.gz"
           mkdir -p /usr/local
           sudo tar -xzf opentracecapture-linux.tar.gz -C /usr/local --strip-components=1
