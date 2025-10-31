@@ -41,8 +41,13 @@ else
   deps += libobs_dep
 endif
 
-# Find OpenTraceCapture
-opentracecapture_dep = dependency('opentracecapture', required: true)
+# Find OpenTraceCapture - use direct linking if pkg-config fails
+opentracecapture_dep = dependency('opentracecapture', required: false)
+if not opentracecapture_dep.found()
+  opentracecapture_lib = cc.find_library('opentracecapture', dirs: ['/usr/local/lib', '/usr/local/lib/x86_64-linux-gnu'])
+  opentracecapture_inc = include_directories('/usr/local/include')
+  opentracecapture_dep = declare_dependency(dependencies: opentracecapture_lib, include_directories: opentracecapture_inc)
+endif
 deps += opentracecapture_dep
 
 # Platform-specific dependencies

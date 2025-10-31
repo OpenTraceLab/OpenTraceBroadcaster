@@ -193,25 +193,13 @@ jobs:
       - name: Download OpenTraceCapture 📦
         run: |
           # Download latest OpenTraceCapture release for Ubuntu
-          echo "Checking available releases..."
           LATEST_RELEASE=$(curl -s https://api.github.com/repos/OpenTraceLab/OpenTraceCapture/releases | jq -r '.[0].tag_name')
           echo "Using release: $LATEST_RELEASE"
           wget "https://github.com/OpenTraceLab/OpenTraceCapture/releases/download/${LATEST_RELEASE}/opentracecapture-linux.tar.gz"
-          
-          # Check archive structure
-          echo "Archive contents:"
-          tar -tzf opentracecapture-linux.tar.gz | head -20
-          
-          mkdir -p /usr/local
           sudo tar -xzf opentracecapture-linux.tar.gz -C /usr/local --strip-components=1
           
-          # Debug: Check what was installed
-          echo "Checking installed files:"
-          find /usr/local -name "*.pc" 2>/dev/null || echo "No .pc files found"
-          find /usr/local -name "*opentrace*" 2>/dev/null | head -10
-          
-          # Update pkg-config path
-          echo "PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/local/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+          # Set pkg-config path for the installed libraries
+          echo "PKG_CONFIG_PATH=/usr/local/lib/x86_64-linux-gnu/pkgconfig:$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
       - name: Build with Meson 🧱
         run: |
