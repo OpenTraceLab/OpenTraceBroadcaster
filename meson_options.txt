@@ -1,0 +1,8 @@
+option('obs_plugin_dir', type: 'string', value: '', 
+       description: 'OBS plugin installation directory')
+option('obs_data_dir', type: 'string', value: '', 
+       description: 'OBS data installation directory')
+option('enable_tests', type: 'boolean', value: false, 
+       description: 'Build tests')
+option('enable_docs', type: 'boolean', value: false, 
+       description: 'Build documentation')

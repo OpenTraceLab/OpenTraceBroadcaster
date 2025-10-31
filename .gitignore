@@ -1,0 +1,20 @@
+# Build directories
+build/
+out/
+
+# AI/Cache folders
+.amazonq/
+.q/
+__pycache__/
+.cache/
+
+# IDE files
+.vs/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+Thumbs.db
